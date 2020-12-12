@@ -1,0 +1,30 @@
+## Feign
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+## Sonar
+sonar:
+  project:
+    projectOwner: spring-projects
+    projectName: spring-boot
+    token: fb63a3afc2342eb7116d82f512458bd7ea798837
+    autoConnectEnabled: true
+
+## MySQL
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/eylmz?autoReconnect=true&useSSL=false
+    username: root
+    password: Emre.1991
+    driver-class-name: org.gjt.mm.mysql.Driver
+  jpa:
+    hibernate:
+      use-new-id-generator-mappings: false
+      ddl-auto: create
+    ddl-auto: create
+    show-sql: true
