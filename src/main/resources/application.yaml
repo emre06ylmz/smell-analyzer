@@ -1,4 +1,4 @@
-## Feign
+## Feign general configurations
 feign:
   client:
     config:
@@ -12,19 +12,28 @@ sonar:
   project:
     projectOwner: spring-projects
     projectName: spring-boot
-    token: fb63a3afc2342eb7116d82f512458bd7ea798837
+    token: df58871d24a25b130af464c6a1e982560f96d9ec
     autoConnectEnabled: true
+
+# sonar feign client props
+sonarClient:
+  ribbon:
+    listOfServers: http://localhost:9000
+
+# disable eureka in ribbon
+ribbon:
+  eureka:
+    enabled: false
 
 ## MySQL
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/eylmz?autoReconnect=true&useSSL=false
+    url: jdbc:mysql://localhost:3306/eylmz?autoReconnect=true&useSSL=false&createDatabaseIfNotExist=true
     username: root
     password: Emre.1991
     driver-class-name: org.gjt.mm.mysql.Driver
   jpa:
     hibernate:
       use-new-id-generator-mappings: false
-      ddl-auto: create
-    ddl-auto: create
+      ddl-auto: update
     show-sql: true

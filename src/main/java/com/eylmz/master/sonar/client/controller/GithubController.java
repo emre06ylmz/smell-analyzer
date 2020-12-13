@@ -1,5 +1,6 @@
 package com.eylmz.master.sonar.client.controller;
 
+import com.eylmz.master.sonar.client.dto.ProjectDTO;
 import com.eylmz.master.sonar.client.dto.github.ContributorDTO;
 import com.eylmz.master.sonar.client.dto.github.UserDTO;
 import com.eylmz.master.sonar.client.exception.GithubException;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.eclipse.egit.github.core.Contributor;
 import org.eclipse.egit.github.core.RepositoryCommit;
 import org.eclipse.egit.github.core.User;
+import org.hibernate.criterion.ProjectionList;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -98,6 +100,22 @@ public class GithubController {
             e.printStackTrace();
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "user not found"
+            );
+        }
+    }
+
+    @GetMapping("/addProject")
+    public void addProject(@RequestParam(name = "name", required = false) String name, @RequestParam(name = "description", required = false) String description) {
+        try {
+            ProjectDTO projectDTO = new ProjectDTO();
+            projectDTO.setName(name);
+            projectDTO.setDescription(description);
+
+            this.githubDTOService.addProject(projectDTO);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "project not added"
             );
         }
     }

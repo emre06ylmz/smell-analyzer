@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-@FeignClient(value = "sonar-qube-service", url = "http://localhost:9000")
+@FeignClient("sonarClient")
 public interface SonarFeignClient {
 
     @RequestMapping(method = RequestMethod.GET, value = "/api/issues/search?id={id}&types={types}&pageSize=500")

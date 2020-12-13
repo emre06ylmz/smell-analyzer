@@ -13,6 +13,16 @@ public class UserDTO implements Serializable {
     /** serialVersionUID */
     private static final long serialVersionUID = -1211802439119529774L;
 
+    /**
+     * TYPE_USER
+     */
+    public static final String TYPE_USER = "User"; //$NON-NLS-1$
+
+    /**
+     * TYPE_ORG
+     */
+    public static final String TYPE_ORG = "Organization"; //$NON-NLS-1$
+
     private Date createdAt;
 
     private int followers;
