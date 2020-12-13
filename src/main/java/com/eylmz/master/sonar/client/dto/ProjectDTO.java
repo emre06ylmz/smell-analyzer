@@ -1,8 +1,10 @@
 package com.eylmz.master.sonar.client.dto;
 
+import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.io.Serializable;
 
+@Entity
 public class ProjectDTO implements Serializable {
 
     /** serialVersionUID */

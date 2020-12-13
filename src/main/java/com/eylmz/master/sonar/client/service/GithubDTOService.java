@@ -15,11 +15,12 @@ import java.util.List;
 @Service
 public class GithubDTOService implements IGithubDTOService {
 
-    @Autowired
-    private IContributorRepository contributorRepository;
 
     @Autowired
     private IUserRepository userRepository;
+
+    @Autowired
+    private IContributorRepository contributorRepository;
 
     @Autowired
     private IProjectRepository projectRepository;
