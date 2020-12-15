@@ -1,4 +1,4 @@
-package com.eylmz.master.sonar.client.webclient;
+package com.eylmz.master.sonar.client.integration.sonar;
 
 
 import com.eylmz.master.sonar.client.dto.sonar.ComponentResult;

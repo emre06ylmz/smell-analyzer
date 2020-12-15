@@ -2,7 +2,7 @@ package com.eylmz.master.sonar.client.service;
 
 import com.eylmz.master.sonar.client.dto.sonar.ComponentResult;
 import com.eylmz.master.sonar.client.dto.sonar.IssueResult;
-import com.eylmz.master.sonar.client.webclient.SonarFeignClient;
+import com.eylmz.master.sonar.client.integration.sonar.SonarFeignClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

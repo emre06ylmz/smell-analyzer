@@ -1,19 +1,24 @@
 package com.eylmz.master.sonar.client.controller;
 
-import com.eylmz.master.sonar.client.dto.ProjectDTO;
-import com.eylmz.master.sonar.client.dto.github.ContributorDTO;
-import com.eylmz.master.sonar.client.dto.github.UserDTO;
+import com.eylmz.master.sonar.client.dto.Project;
+import com.eylmz.master.sonar.client.dto.github.Contributor;
+import com.eylmz.master.sonar.client.dto.github.Issue;
+import com.eylmz.master.sonar.client.dto.github.PullRequest;
+import com.eylmz.master.sonar.client.dto.github.User;
 import com.eylmz.master.sonar.client.exception.GithubException;
-import com.eylmz.master.sonar.client.service.IGithubDTOService;
-import com.eylmz.master.sonar.client.service.IGithubApiService;
+import com.eylmz.master.sonar.client.integration.github.GithubIntegrator;
+import com.eylmz.master.sonar.client.integration.shell.ShellIntegrator;
+import com.eylmz.master.sonar.client.service.IProjectService;
+import com.eylmz.master.sonar.client.service.IContributorService;
+import com.eylmz.master.sonar.client.service.IIssueService;
+import com.eylmz.master.sonar.client.service.IPullRequestService;
+import com.eylmz.master.sonar.client.service.IUserService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
-import org.eclipse.egit.github.core.Contributor;
 import org.eclipse.egit.github.core.RepositoryCommit;
-import org.eclipse.egit.github.core.User;
-import org.hibernate.criterion.ProjectionList;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,18 +38,41 @@ import java.util.stream.Collectors;
 public class GithubController {
 
     @Autowired
-    private final IGithubApiService githubService;
+    private final GithubIntegrator githubIntegrator;
 
     @Autowired
     private final ModelMapper modelMapper;
 
     @Autowired
-    private final IGithubDTOService githubDTOService;
+    private final IContributorService contributorService;
+
+    @Autowired
+    private final IUserService userService;
+
+    @Autowired
+    private final IIssueService issueService;
+
+    @Autowired
+    private final IPullRequestService pullRequestService;
+
+    @Autowired
+    private final IProjectService projectService;
+
+    @Autowired
+    private final ShellIntegrator shellIntegrator;
+
+    @Value("${sonar.project.projectUuid}")
+    public String projectUuid;
+
+    @GetMapping("/shell")
+    public void shell() {
+        this.shellIntegrator.runCommand();
+    }
 
     @GetMapping("/getCommits")
     public Collection<RepositoryCommit> getCommits(@RequestParam(name = "sha", required = false) String sha, @RequestParam(name = "path", required = false) String path) {
         try {
-            return githubService.getCommits(sha, path);
+            return githubIntegrator.getCommits(sha, path);
         } catch (GithubException e) {
             e.printStackTrace();
             throw new ResponseStatusException(
@@ -53,15 +81,43 @@ public class GithubController {
         }
     }
 
+    @GetMapping("/getIssues")
+    public Collection<Issue> getIssues() {
+        List<Issue> issues = this.githubIntegrator.getIssues().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        for (Issue issue : issues) {
+            issue.setUuid(projectUuid);
+            issueService.addIssue(issue);
+        }
+
+        return issues;
+    }
+
+    @GetMapping("/getPullRequests")
+    public Collection<PullRequest> getPullRequests() {
+        List<PullRequest> pullRequests = this.githubIntegrator.getPullRequests().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        for (PullRequest pullRequest : pullRequests) {
+            pullRequest.setUuid(projectUuid);
+            pullRequestService.addPullRequest(pullRequest);
+        }
+
+        return pullRequests;
+    }
+
     @GetMapping("/getContributors")
-    public List<ContributorDTO> getContributors() {
+    public List<Contributor> getContributors() {
         try {
-            List<ContributorDTO> contributors =  this.githubService.getContributors().stream()
+            List<Contributor> contributors = this.githubIntegrator.getContributors().stream()
                     .map(this::convertToDto)
                     .collect(Collectors.toList());
 
-            for (ContributorDTO contributor : contributors) {
-                githubDTOService.addContributor(contributor);
+            for (Contributor contributor : contributors) {
+                contributorService.addContributor(contributor);
             }
 
             return contributors;
@@ -74,16 +130,17 @@ public class GithubController {
     }
 
     @GetMapping("/getUsers")
-    public List<UserDTO> getUsers() {
+    public List<User> getUsers() {
         try {
-            List<UserDTO> userDTOList = new ArrayList<>();
-            List<Contributor> contributors = this.githubService.getContributors();
-            for (Contributor contributor : contributors) {
-                UserDTO userDTO = this.convertToDto(githubService.getUser(contributor.getLogin()));
-                githubDTOService.addUser(userDTO);
-                userDTOList.add(userDTO);
+            List<User> userList = new ArrayList<>();
+            List<org.eclipse.egit.github.core.Contributor> contributors = this.githubIntegrator.getContributors();
+            for (org.eclipse.egit.github.core.Contributor contributor : contributors) {
+                User user = this.convertToDto(githubIntegrator.getUser(contributor.getLogin()));
+                user.setUuid(projectUuid);
+                userService.addUser(user);
+                userList.add(user);
             }
-            return userDTOList;
+            return userList;
         } catch (GithubException e) {
             e.printStackTrace();
             throw new ResponseStatusException(
@@ -93,9 +150,9 @@ public class GithubController {
     }
 
     @GetMapping("/getUser")
-    public UserDTO getUser(@RequestParam(name = "login", required = false) String login) {
+    public User getUser(@RequestParam(name = "login", required = false) String login) {
         try {
-            return this.convertToDto(githubService.getUser(login));
+            return this.convertToDto(githubIntegrator.getUser(login));
         } catch (GithubException e) {
             e.printStackTrace();
             throw new ResponseStatusException(
@@ -107,11 +164,11 @@ public class GithubController {
     @GetMapping("/addProject")
     public void addProject(@RequestParam(name = "name", required = false) String name, @RequestParam(name = "description", required = false) String description) {
         try {
-            ProjectDTO projectDTO = new ProjectDTO();
+            Project projectDTO = new Project();
             projectDTO.setName(name);
             projectDTO.setDescription(description);
 
-            this.githubDTOService.addProject(projectDTO);
+            this.projectService.addProject(projectDTO);
         } catch (Exception e) {
             e.printStackTrace();
             throw new ResponseStatusException(
@@ -120,13 +177,20 @@ public class GithubController {
         }
     }
 
-    private ContributorDTO convertToDto(Contributor contributor) {
-        return this.modelMapper.map(contributor, ContributorDTO.class);
+    private Contributor convertToDto(org.eclipse.egit.github.core.Contributor contributor) {
+        return this.modelMapper.map(contributor, Contributor.class);
     }
 
-    private UserDTO convertToDto(User user) {
-        return this.modelMapper.map(user, UserDTO.class);
+    private User convertToDto(org.eclipse.egit.github.core.User user) {
+        return this.modelMapper.map(user, User.class);
     }
 
+    private Issue convertToDto(org.eclipse.egit.github.core.Issue issue) {
+        return this.modelMapper.map(issue, Issue.class);
+    }
+
+    private PullRequest convertToDto(org.eclipse.egit.github.core.PullRequest pullRequest) {
+        return this.modelMapper.map(pullRequest, PullRequest.class);
+    }
 
 }

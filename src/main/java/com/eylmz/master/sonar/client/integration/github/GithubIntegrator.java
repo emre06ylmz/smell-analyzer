@@ -1,30 +1,24 @@
-package com.eylmz.master.sonar.client.webclient;
+package com.eylmz.master.sonar.client.integration.github;
 
 import com.eylmz.master.sonar.client.exception.GithubException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.egit.github.core.Contributor;
-import org.eclipse.egit.github.core.Repository;
-import org.eclipse.egit.github.core.RepositoryCommit;
-import org.eclipse.egit.github.core.User;
+import org.eclipse.egit.github.core.*;
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.client.PageIterator;
-import org.eclipse.egit.github.core.service.CommitService;
-import org.eclipse.egit.github.core.service.RepositoryService;
-import org.eclipse.egit.github.core.service.UserService;
+import org.eclipse.egit.github.core.service.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Component
-public class GithubApiClient {
+public class GithubIntegrator {
 
-    private static final Logger logger = LogManager.getLogger(GithubApiClient .class);
+    private static final Logger logger = LogManager.getLogger(GithubIntegrator.class);
+
     @Value("${sonar.project.autoConnectEnabled:false}")
     public boolean autoConnectEnabled;
     @Value("${sonar.project.projectOwner}")
@@ -33,12 +27,14 @@ public class GithubApiClient {
     public String projectName;
     @Value("${sonar.project.token}")
     public String token;
+
     protected GitHubClient gitHubClient;
     protected RepositoryService repositoryService;
     protected Repository repository;
     protected CommitService commitService;
     protected UserService userService;
-
+    protected IssueService issueService;
+    protected PullRequestService pullRequestService;
 
     @PostConstruct
     private void postConstruct() {
@@ -61,6 +57,9 @@ public class GithubApiClient {
             this.commitService = new CommitService(this.gitHubClient);
 
             this.userService = new UserService(this.gitHubClient);
+            this.issueService = new IssueService(this.gitHubClient);
+
+            this.pullRequestService = new PullRequestService(this.gitHubClient);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -80,7 +79,7 @@ public class GithubApiClient {
     }
 
     public List<Contributor> getContributors() throws GithubException {
-        List<Contributor> contributors ;
+        List<Contributor> contributors;
         try {
             contributors = this.repositoryService.getContributors(repository, false);
         } catch (Exception e) {
@@ -110,6 +109,28 @@ public class GithubApiClient {
             throw new GithubException("getUser error", e);
         }
         return user;
+    }
+
+    public Collection<Issue> getIssues() {
+        Map<String, String> pageIssueParams = new HashMap<>();
+        PageIterator<Issue> issueIterator = this.issueService.pageIssues(this.projectOwner, this.projectName,
+                pageIssueParams);
+        return issueIterator.next();
+    }
+
+    public Collection<PullRequest> getPullRequests() {
+        PageIterator<PullRequest> pRIterator = this.pullRequestService.pagePullRequests(this.repository, IssueService.FILTER_CREATED);
+        return pRIterator.next();
+    }
+
+    public List<CommitFile> getFilesOfPullRequest(PullRequest pullRequest) {
+        List<CommitFile> commitFiles = new ArrayList<>();
+        try {
+            commitFiles = this.pullRequestService.getFiles(this.repository, pullRequest.getNumber());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return commitFiles;
     }
 
 }

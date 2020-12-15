@@ -10,8 +10,9 @@ feign:
 ## Sonar
 sonar:
   project:
-    projectOwner: spring-projects
-    projectName: spring-boot
+    projectOwner: ReactiveX
+    projectName: RxJava
+    projectUuid: AXZipb1ICl93wm5yKTEQ
     token: df58871d24a25b130af464c6a1e982560f96d9ec
     autoConnectEnabled: true
 
@@ -29,9 +30,9 @@ ribbon:
 spring:
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   datasource:
-    url:  jdbc:postgresql://localhost:5432/sonar
+    url: jdbc:postgresql://localhost:5432/sonar
     username: emreyilmaz
     password: Emre.1991
