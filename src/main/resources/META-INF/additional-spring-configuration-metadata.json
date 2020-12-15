@@ -1,0 +1,28 @@
+{
+  "properties": [
+    {
+      "name": "sonar.project.projectOwner",
+      "type": "java.lang.String",
+      "description": "Description for sonar.project.projectOwner."
+    },
+    {
+      "name": "sonar.project.projectUuid",
+      "type": "java.lang.String",
+      "description": "Description for sonar.project.projectUuid."
+    },
+    {
+      "name": "sonar.project.token",
+      "type": "java.lang.String",
+      "description": "Description for sonar.project.token."
+    },
+    {
+      "name": "sonar.project.autoConnectEnabled",
+      "type": "java.lang.String",
+      "description": "Description for sonar.project.autoConnectEnabled."
+    },
+    {
+      "name": "sonar.project.projectName",
+      "type": "java.lang.String",
+      "description": "Description for sonar.project.projectName."
+    }
+  ] }

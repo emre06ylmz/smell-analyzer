@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -65,7 +66,7 @@ public class GithubController {
     public String projectUuid;
 
     @GetMapping("/shell")
-    public void shell() {
+    public void shell() throws IOException, InterruptedException {
         this.shellIntegrator.runCommand();
     }
 
