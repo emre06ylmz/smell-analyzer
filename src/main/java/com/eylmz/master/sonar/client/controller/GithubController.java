@@ -1,18 +1,11 @@
 package com.eylmz.master.sonar.client.controller;
 
 import com.eylmz.master.sonar.client.dto.Project;
-import com.eylmz.master.sonar.client.dto.github.Contributor;
-import com.eylmz.master.sonar.client.dto.github.Issue;
-import com.eylmz.master.sonar.client.dto.github.PullRequest;
-import com.eylmz.master.sonar.client.dto.github.User;
+import com.eylmz.master.sonar.client.dto.github.*;
 import com.eylmz.master.sonar.client.exception.GithubException;
 import com.eylmz.master.sonar.client.integration.github.GithubIntegrator;
 import com.eylmz.master.sonar.client.integration.shell.ShellIntegrator;
-import com.eylmz.master.sonar.client.service.IProjectService;
-import com.eylmz.master.sonar.client.service.IContributorService;
-import com.eylmz.master.sonar.client.service.IIssueService;
-import com.eylmz.master.sonar.client.service.IPullRequestService;
-import com.eylmz.master.sonar.client.service.IUserService;
+import com.eylmz.master.sonar.client.service.*;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.egit.github.core.RepositoryCommit;
@@ -60,6 +53,9 @@ public class GithubController {
     private final IProjectService projectService;
 
     @Autowired
+    private final IEventService eventService;
+
+    @Autowired
     private final ShellIntegrator shellIntegrator;
 
     @Value("${sonar.project.projectUuid}")
@@ -69,6 +65,22 @@ public class GithubController {
     public void shell() throws IOException, InterruptedException {
         this.shellIntegrator.runCommand();
     }
+
+    @GetMapping("/getRepo")
+    public Collection<Issue> getRepo(@RequestParam(name = "sha", required = false) String name) {
+        List<Issue> issues = this.githubIntegrator.getIssues().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        for (Issue issue : issues) {
+            issue.setUuid(projectUuid);
+            issueService.addIssue(issue);
+        }
+
+        return issues;
+    }
+
+
 
     @GetMapping("/getCommits")
     public Collection<RepositoryCommit> getCommits(@RequestParam(name = "sha", required = false) String sha, @RequestParam(name = "path", required = false) String path) {
@@ -80,6 +92,20 @@ public class GithubController {
                     HttpStatus.BAD_REQUEST, "commits not found"
             );
         }
+    }
+
+    @GetMapping("/getUserEvents")
+    public Collection<Event> getUserEvents(@RequestParam(name = "user") String user) {
+        List<Event> events = this.githubIntegrator.getUserEvents(user).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        for (Event event : events) {
+            event.setUser(this.getUser(user));
+            eventService.addEvent(event);
+        }
+
+        return events;
     }
 
     @GetMapping("/getIssues")
@@ -192,6 +218,10 @@ public class GithubController {
 
     private PullRequest convertToDto(org.eclipse.egit.github.core.PullRequest pullRequest) {
         return this.modelMapper.map(pullRequest, PullRequest.class);
+    }
+
+    private Event convertToDto(org.eclipse.egit.github.core.event.Event event) {
+        return this.modelMapper.map(event, Event.class);
     }
 
 }

@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.egit.github.core.*;
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.client.PageIterator;
+import org.eclipse.egit.github.core.event.Event;
 import org.eclipse.egit.github.core.service.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,7 @@ public class GithubIntegrator {
     protected UserService userService;
     protected IssueService issueService;
     protected PullRequestService pullRequestService;
+    protected EventService eventService;
 
     @PostConstruct
     private void postConstruct() {
@@ -60,8 +62,8 @@ public class GithubIntegrator {
             this.issueService = new IssueService(this.gitHubClient);
 
             this.pullRequestService = new PullRequestService(this.gitHubClient);
+            eventService = new EventService(this.gitHubClient);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -131,6 +133,11 @@ public class GithubIntegrator {
             e.printStackTrace();
         }
         return commitFiles;
+    }
+
+    public Collection<Event> getUserEvents(String user) {
+        PageIterator<Event> pRIterator = this.eventService.pageUserEvents(user);
+        return pRIterator.next();
     }
 
 }

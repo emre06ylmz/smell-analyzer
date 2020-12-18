@@ -2,11 +2,10 @@ package com.eylmz.master.sonar.client.dto.github;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Entity
@@ -25,6 +24,7 @@ public class User implements Serializable {
      * serialVersionUID
      */
     private static final long serialVersionUID = -1211802439119529774L;
+
     private Date createdAt;
 
     private int followers;
@@ -60,4 +60,10 @@ public class User implements Serializable {
 
     private String uuid;
 
+    @OneToMany(mappedBy = "user")
+    private List<Event> events;
+
+    //@ManyToOne(fetch=FetchType.EAGER)
+    //@JoinColumn(name="id")
+    //private UserPlan plan;
 }
