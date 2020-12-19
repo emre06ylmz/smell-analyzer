@@ -8,7 +8,6 @@ import com.eylmz.master.sonar.client.integration.shell.ShellIntegrator;
 import com.eylmz.master.sonar.client.service.*;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
-import org.eclipse.egit.github.core.RepositoryCommit;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +52,9 @@ public class GithubController {
     private final IProjectService projectService;
 
     @Autowired
+    private final IRepositoryCommitService repositoryCommitService;
+
+    @Autowired
     private final IEventService eventService;
 
     @Autowired
@@ -67,31 +69,66 @@ public class GithubController {
     }
 
     @GetMapping("/getRepo")
-    public Collection<Issue> getRepo(@RequestParam(name = "sha", required = false) String name) {
+    public void getRepo(@RequestParam(name = "projectOwner") String projectOwner, @RequestParam(name = "projectName") String projectName) throws GithubException {
+
+        this.githubIntegrator.connect(projectOwner, projectName);
+
+        // get and save all issues
         List<Issue> issues = this.githubIntegrator.getIssues().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
 
         for (Issue issue : issues) {
             issue.setUuid(projectUuid);
-            issueService.addIssue(issue);
+            //issueService.addIssue(issue);
         }
 
-        return issues;
+        // get and save all pull requests
+        List<PullRequest> pullRequests = this.githubIntegrator.getPullRequests().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        for (PullRequest pullRequest : pullRequests) {
+            pullRequest.setUuid(projectUuid);
+            //pullRequestService.addPullRequest(pullRequest);
+        }
+
+        //get and save all contributors and users
+        List<Contributor> contributors = this.githubIntegrator.getContributors().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        for (Contributor contributor : contributors) {
+            //contributorService.addContributor(contributor);
+
+            User user = this.convertToDto(githubIntegrator.getUser(contributor.getLogin()));
+            user.setUuid(projectUuid);
+            //userService.addUser(user);
+        }
+
+        //get and save all repository commit
+        List<RepositoryCommit> commits = this.githubIntegrator.getCommits().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        for (RepositoryCommit commit : commits) {
+            this.repositoryCommitService.addRepositoryCommit(commit);
+        }
+
     }
 
 
 
     @GetMapping("/getCommits")
-    public Collection<RepositoryCommit> getCommits(@RequestParam(name = "sha", required = false) String sha, @RequestParam(name = "path", required = false) String path) {
-        try {
-            return githubIntegrator.getCommits(sha, path);
-        } catch (GithubException e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "commits not found"
-            );
+    public Collection<RepositoryCommit> getCommits(@RequestParam(name = "sha", required = false) String sha, @RequestParam(name = "path", required = false) String path) throws GithubException {
+        List<com.eylmz.master.sonar.client.dto.github.RepositoryCommit> commits = this.githubIntegrator.getCommits().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        for (RepositoryCommit commit : commits) {
+            this.repositoryCommitService.addRepositoryCommit(commit);
         }
+
+        return commits;
     }
 
     @GetMapping("/getUserEvents")
@@ -222,6 +259,10 @@ public class GithubController {
 
     private Event convertToDto(org.eclipse.egit.github.core.event.Event event) {
         return this.modelMapper.map(event, Event.class);
+    }
+
+    private RepositoryCommit convertToDto(org.eclipse.egit.github.core.RepositoryCommit repositoryCommit) {
+        return this.modelMapper.map(repositoryCommit, RepositoryCommit.class);
     }
 
 }

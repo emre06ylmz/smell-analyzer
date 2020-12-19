@@ -68,12 +68,10 @@ public class GithubIntegrator {
         }
     }
 
-    public Collection<RepositoryCommit> getCommits(String sha, String path) throws GithubException {
-        PageIterator<RepositoryCommit> repositoryCommitsIterator;
+    public Collection<RepositoryCommit> getCommits() throws GithubException {
         Collection<RepositoryCommit> repositoryCommits;
         try {
-            repositoryCommitsIterator = this.commitService.pageCommits(repository, sha, path);
-            repositoryCommits = repositoryCommitsIterator.next();
+            repositoryCommits = this.commitService.getCommits(repository);
         } catch (Exception e) {
             throw new GithubException("getCommits error", e);
         }

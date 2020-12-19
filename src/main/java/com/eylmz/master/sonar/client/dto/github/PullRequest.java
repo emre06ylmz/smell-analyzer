@@ -2,9 +2,7 @@ package com.eylmz.master.sonar.client.dto.github;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -47,6 +45,8 @@ public class PullRequest implements Serializable {
 
     private String body;
 
+    @Lob
+    @Column
     private String bodyHtml;
 
     private String bodyText;

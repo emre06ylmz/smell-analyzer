@@ -2,9 +2,7 @@ package com.eylmz.master.sonar.client.dto.github;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -31,10 +29,16 @@ public class Issue implements Serializable {
 
     private int number;
 
+    @Lob
+    @Column
     private String body;
 
+    @Lob
+    @Column
     private String bodyHtml;
 
+    @Lob
+    @Column
     private String bodyText;
 
     private String htmlUrl;
