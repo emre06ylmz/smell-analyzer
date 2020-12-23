@@ -111,16 +111,13 @@ public class GithubIntegrator {
         return user;
     }
 
-    public Collection<Issue> getIssues() {
-        Map<String, String> pageIssueParams = new HashMap<>();
-        PageIterator<Issue> issueIterator = this.issueService.pageIssues(this.projectOwner, this.projectName,
-                pageIssueParams);
-        return issueIterator.next();
+    public Collection<Issue> getIssues() throws IOException {
+        return this.issueService.getIssues(this.projectOwner, this.projectName,
+                new HashMap<>());
     }
 
-    public Collection<PullRequest> getPullRequests() {
-        PageIterator<PullRequest> pRIterator = this.pullRequestService.pagePullRequests(this.repository, IssueService.FILTER_CREATED);
-        return pRIterator.next();
+    public Collection<PullRequest> getPullRequests() throws IOException {
+        return this.pullRequestService.getPullRequests(this.repository, IssueService.FILTER_CREATED);
     }
 
     public List<CommitFile> getFilesOfPullRequest(PullRequest pullRequest) {
@@ -133,9 +130,8 @@ public class GithubIntegrator {
         return commitFiles;
     }
 
-    public Collection<Event> getUserEvents(String user) {
-        PageIterator<Event> pRIterator = this.eventService.pageUserEvents(user);
-        return pRIterator.next();
+    public PageIterator<Event> getUserEvents(String user) {
+        return this.eventService.pageUserEvents(user);
     }
 
 }

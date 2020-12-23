@@ -32,13 +32,4 @@ public class SonarController {
         return projectService.listFiles(uuid);
     }
 
-    @GetMapping("/getIssues")
-    public IssueResult getIssues(@RequestParam(name = "id") String id, @RequestParam(name = "types") String types) {
-        return sonarService.getIssues(id, types);
-    }
-
-    @GetMapping("/getComponents")
-    public ComponentResult getComponents(@RequestParam(name = "component") String component, @RequestParam(name = "metricKeys") String metricKeys) {
-        return sonarService.getComponents(component, metricKeys);
-    }
 }

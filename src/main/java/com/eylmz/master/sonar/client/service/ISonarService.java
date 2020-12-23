@@ -1,10 +1,11 @@
 package com.eylmz.master.sonar.client.service;
 
-import com.eylmz.master.sonar.client.dto.sonar.ComponentResult;
-import com.eylmz.master.sonar.client.dto.sonar.IssueResult;
+import com.eylmz.master.sonar.client.dto.sonar.IssueSonar;
+import java.util.List;
 
 public interface ISonarService {
-    IssueResult getIssues(String id, String types);
 
-    ComponentResult getComponents(String component, String metricKeys);
+    void addIssue(IssueSonar issue) ;
+
+    List<IssueSonar> listIssues(String projectUuid);
 }

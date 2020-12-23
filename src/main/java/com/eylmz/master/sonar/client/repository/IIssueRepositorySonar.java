@@ -1,6 +1,6 @@
 package com.eylmz.master.sonar.client.repository;
 
-import com.eylmz.master.sonar.client.dto.github.User;
+import com.eylmz.master.sonar.client.dto.sonar.IssueSonar;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -11,11 +11,9 @@ import java.util.List;
 
 @Transactional
 @Repository
-public interface IUserRepository extends CrudRepository<User, Integer> {
+public interface IIssueRepositorySonar extends CrudRepository<IssueSonar, Integer> {
 
-    @Query("SELECT p FROM User p WHERE p.uuid = :login")
-    List<User> findUsersByUuid(@Param("login") String login);
+    @Query("SELECT p FROM com.eylmz.master.sonar.client.dto.sonar.IssueSonar p WHERE p.project_uuid = :project_uuid")
+    List<IssueSonar> findIssuesByProject_uuid(@Param("project_uuid") String project_uuid);
 
-    @Query("SELECT u FROM User u WHERE u.login = :login")
-    User findUserByLogin(@Param("login") String login);
 }

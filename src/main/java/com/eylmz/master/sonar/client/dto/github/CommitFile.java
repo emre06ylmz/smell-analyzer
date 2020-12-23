@@ -34,7 +34,4 @@ public class CommitFile  implements Serializable {
 
     private String status;
 
-    @ManyToOne(fetch= FetchType.LAZY, cascade = {CascadeType.ALL})
-    @JoinColumn(name="commit_id")
-    private RepositoryCommit commit;
 }

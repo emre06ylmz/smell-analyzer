@@ -60,8 +60,17 @@ public class User implements Serializable {
 
     private String uuid;
 
-    @OneToMany(mappedBy = "user")
+    private int eventCount;
+
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.ALL})
     private List<Event> events;
+
+
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.ALL})
+    private List<RepositoryCommit> repositoryCommitsByAuthor;
+
+    @OneToMany(mappedBy = "committer", cascade = {CascadeType.ALL})
+    private List<RepositoryCommit> repositoryCommitsByCommitter;
 
     //@ManyToOne(fetch=FetchType.EAGER)
     //@JoinColumn(name="id")

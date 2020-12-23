@@ -5,6 +5,8 @@ import com.eylmz.master.sonar.client.repository.IRepositoryCommitRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RepositoryCommitService implements IRepositoryCommitService{
 
@@ -17,7 +19,8 @@ public class RepositoryCommitService implements IRepositoryCommitService{
     }
 
     @Override
-    public Iterable<RepositoryCommit> listUsers(RepositoryCommit repositoryCommit) {
-        return repositoryCommitRepository.findAll();
+    public List<RepositoryCommit> listRepositoryCommits(String uuid) {
+        return repositoryCommitRepository.findRepositoryCommitByUuid(uuid);
     }
+
 }

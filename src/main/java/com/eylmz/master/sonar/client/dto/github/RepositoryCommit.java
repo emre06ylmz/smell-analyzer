@@ -18,22 +18,21 @@ public class RepositoryCommit  implements Serializable {
      */
     private static final long serialVersionUID = -8911733018395257250L;
 
-    @OneToMany(mappedBy = "commit", cascade = {CascadeType.ALL})
-    private List<CommitFile> files;
-
     @Id
+    @GeneratedValue
     private int id;
 
     private String sha;
 
     private String url;
 
-    @ManyToOne(fetch= FetchType.LAZY, cascade = {CascadeType.ALL})
+    @ManyToOne(fetch= FetchType.LAZY, optional = true)
     @JoinColumn(name="author_id")
     private User author;
 
-    @ManyToOne(fetch= FetchType.LAZY, cascade = {CascadeType.ALL})
+    @ManyToOne(fetch= FetchType.LAZY, optional = true)
     @JoinColumn(name="committer_id")
     private User committer;
 
+    private String uuid;
 }

@@ -43,6 +43,8 @@ public class PullRequest implements Serializable {
 
     private int number;
 
+    @Lob
+    @Column
     private String body;
 
     @Lob

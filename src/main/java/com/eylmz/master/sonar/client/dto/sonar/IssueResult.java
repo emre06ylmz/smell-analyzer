@@ -21,7 +21,7 @@ public class IssueResult {
 
     private int effortTotal;
     private int debtTotal;
-    private ArrayList<Issue> issues;
+    private ArrayList<IssueSonar> issues;
     private ArrayList<Component> components;
     private ArrayList<Facet> facets;
 }
