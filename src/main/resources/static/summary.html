@@ -1,109 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Create two equal columns that floats next to each other */
+        .column {
+            float: left;
+            width: 50%;
+            padding: 10px;
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
 </head>
 <body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 
-
-
 <h1>Summary</h1>
-<label>Project Name</label>:<label id="projectName1"></label>
-<br/>
-<label>Commit Count</label>:<label id="commitCount1"></label>
-<br/>
-<label>Issue Count</label>:<label id="issueCount1"></label>
-<br/>
-<label>Smell Count</label>:<label id="smellCount1"></label>
-<br/>
-<label>Pull Request Count</label>:<label id="pullRequestCount1"></label>
-<br/>
+<div class="row">
+    <div width="1200" height="1200">
+        <canvas id="actions"></canvas>
+    </div>
 
-<div width="1200" height="1200">
-    <canvas id="developers1"></canvas>
+    <div width="1200" height="1200">
+        <canvas id="followers"></canvas>
+    </div>
+
+    <div width="1200" height="1200">
+        <canvas id="gists"></canvas>
+    </div>
+
+    <div width="1200" height="1200">
+        <canvas id="repos"></canvas>
+    </div>
+
 </div>
-<br/><br/>
 
-<label>Project Name</label>:<label id="projectName2"></label>
-<br/>
-<label>Commit Count</label>:<label id="commitCount2"></label>
-<br/>
-<label>Issue Count</label>:<label id="issueCount2"></label>
-<br/>
-<label>Smell Count</label>:<label id="smellCount2"></label>
-<br/>
-<label>Pull Request Count</label>:<label id="pullRequestCount2"></label>
-<br/>
 
-<div width="1200" height="1200">
-    <canvas id="developers2"></canvas>
-</div>
 <script src="script.js"></script>
 
 </body>
 <script>
-    let project1 = {},
-        project2 = {};
+    let projects = [];
 
-    const ctx1 = document.getElementById("developers1").getContext('2d'),
-          ctx2 = document.getElementById("developers2").getContext('2d');
+    const actionsCtx = document.getElementById("actions").getContext('2d');
+    const followersCtx = document.getElementById("followers").getContext('2d');
+    const gistsCtx = document.getElementById("gists").getContext('2d');
+    const reposCtx = document.getElementById("repos").getContext('2d');
 
     const options = {
         responsive: true, // Instruct chart js to respond nicely.
         maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
         scales: {
-            xAxes: [{ scaleLabel: { display: true, labelString: 'followers' } }],
-            yAxes: [{ scaleLabel: { display: true, labelString: 'actions' } }]
+            xAxes: [{ scaleLabel: { display: true, labelString: 'smell density' } }],
+            yAxes: [{ scaleLabel: { display: true, labelString: 'average' } }]
+        },
+        tooltips: {
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    var label = projects[tooltipItem.index].projectName;
+                    return label + ': (' + tooltipItem.xLabel + ', ' + tooltipItem.yLabel + ')';
+                }
+            }
         }
     };
 
     $.getJSON('http://localhost:8080/github/summary', function(data) {
         // JSON result in `data` variable
-        project1 = data[0];
-        project2 = data[1];
+        projects = data;
 
-        project1.developersData = prepareDeveloperData(project1);
-        project2.developersData = prepareDeveloperData(project2);
+        let actionsData = [];
+        let followersData = [];
+        let gistsData = [];
+        let reposData = [];
 
-        setProjectInfo(1, project1, ctx1);
-        setProjectInfo(2, project2, ctx2);
+        $.each(projects, function( index, value ) {
+            let project = prepareDeveloperData(value);
+
+            let avgActivity = project.totalActivity / project.developers.length;
+            let avgFollower = project.totalFollower / project.developers.length;
+            let avgGist = project.totalGist / project.developers.length;
+            let avgRepo = project.totalRepo / project.developers.length;
+
+            let smellDensity = project.smellCount / project.fileCount;
+
+            actionsData.push({x: smellDensity.toFixed(2), y: avgActivity.toFixed(2)});
+            followersData.push({x: smellDensity.toFixed(2), y: avgFollower.toFixed(2)});
+            gistsData.push({x: smellDensity.toFixed(2), y: avgGist.toFixed(2)});
+            reposData.push({x: smellDensity.toFixed(2), y: avgRepo.toFixed(2)});
+        });
+
+        drawGraph("actions", actionsData, actionsCtx);
+        drawGraph("followers", followersData, followersCtx);
+        drawGraph("gists", gistsData, gistsCtx);
+        drawGraph("repos", reposData, reposCtx);
+
     });
 
-    function setProjectInfo(order, project, ctx){
-        $('#projectName' + order).text(project.projectName);
-        $('#commitCount' + order).text(project.commitCount);
-        $('#issueCount' + order).text(project.issueCount);
-        $('#smellCount' + order).text(project.smellCount);
-        $('#pullRequestCount' + order).text(project.pullRequestCount);
-
-        drawGraph(project, ctx);
-    }
-
-    function prepareDeveloperData(projectSummary){
+    function prepareDeveloperData(project){
         const data = [];
-        $.each(projectSummary.developers, function( index, value ) {
-            data.push({x: value.experience, y: value.activityCount})
+        let totalFollower = 0, totalActivity = 0, totalGist = 0, totalRepo = 0;
+        $.each(project.developers, function( index, value ) {
+            totalFollower += value.followerCount;
+            totalActivity += value.activityCount;
+            totalGist += value.gistCount;
+            totalRepo += value.repoCount;
+            data.push({x: value.followerCount, y: value.activityCount})
         });
-        return data;
+
+        project.developersData = data;
+        project.totalFollower = totalFollower;
+        project.totalActivity = totalActivity;
+        project.totalGist = totalGist;
+        project.totalRepo = totalRepo;
+        return project;
     }
 
-    function drawGraph(data, chart){
+    function drawGraph(label, data, chart){
+        let optionNew = options;
+        optionNew.scales.yAxes[0].scaleLabel.labelString = 'average ' + label;
+
         var myChart = new Chart(chart, {
             type: 'scatter',
             data: {
                 datasets: [{
-                    label: data.projectName, // Name the series
-                    data: data.developersData, // Specify the data values array
+                    label:label, // Name the series
+                    data: data, // Specify the data values array
                     borderColor: '#2196f3', // Add custom color border
                     backgroundColor: '#2196f3', // Add custom color background (Points and Fill)
                 }
                 ]
             },
-            options: options
+            options: optionNew
         });
     }
 

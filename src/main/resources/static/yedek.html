@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Create two equal columns that floats next to each other */
+        .column {
+            float: left;
+            width: 50%;
+            padding: 10px;
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+
+<h1>Summary</h1>
+<div class="row">
+    <div class="column">
+        <label>Project Name</label>:<label id="projectName1"></label>
+        <br/>
+        <label>Commit Count</label>:<label id="commitCount1"></label>
+        <br/>
+        <label>Issue Count</label>:<label id="issueCount1"></label>
+        <br/>
+        <label>Pull Request Count</label>:<label id="pullRequestCount1"></label>
+        <br/>
+        <label>Smell Count</label>:<label id="smellCount1"></label>
+        <br/>
+        <label>Developer Count</label>:<label id="developerCount1"></label>
+        <br/>
+        <label>File Count</label>:<label id="fileCount1"></label>
+        <br/>
+        <label>File Per Developer</label>:<label id="filePerDeveloper1"></label>
+        <br/>
+        <label>Smell Per Developer</label>:<label id="smellPerDeveloper1"></label>
+        <br/>
+        <label>Smell Per File</label>:<label id="smellPerFile1"></label>
+        <br/>
+        <label>Average Developer Action Count</label>:<label id="averageDeveloperActionCount1"></label>
+        <br/>
+        <label>Average Developer Follower Count</label>:<label id="averageDeveloperFollowerCount1"></label>
+        <br/>
+
+
+        <div width="1200" height="1200">
+            <canvas id="developers1"></canvas>
+        </div>
+    </div>
+    <div class="column" >
+        <label>Project Name</label>:<label id="projectName2"></label>
+        <br/>
+        <label>Commit Count</label>:<label id="commitCount2"></label>
+        <br/>
+        <label>Issue Count</label>:<label id="issueCount2"></label>
+        <br/>
+        <label>Pull Request Count</label>:<label id="pullRequestCount2"></label>
+        <br/>
+        <label>Smell Count</label>:<label id="smellCount2"></label>
+        <br/>
+        <label>Developer Count</label>:<label id="developerCount2"></label>
+        <br/>
+        <label>File Count</label>:<label id="fileCount2"></label>
+        <br/>
+        <label>File Per Developer</label>:<label id="filePerDeveloper2"></label>
+        <br/>
+        <label>Smell Per Developer</label>:<label id="smellPerDeveloper2"></label>
+        <br/>
+        <label>Smell Per File</label>:<label id="smellPerFile2"></label>
+        <br/>
+        <label>Average Developer Action Count</label>:<label id="averageDeveloperActionCount2"></label>
+        <br/>
+        <label>Average Developer Follower Count</label>:<label id="averageDeveloperFollowerCount2"></label>
+        <br/>
+
+        <div width="1200" height="1200">
+            <canvas id="developers2"></canvas>
+        </div>
+    </div>
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+<script>
+    let project1 = {},
+        project2 = {};
+
+    const ctx1 = document.getElementById("developers1").getContext('2d'),
+        ctx2 = document.getElementById("developers2").getContext('2d');
+
+    const options = {
+        responsive: true, // Instruct chart js to respond nicely.
+        maintainAspectRatio: false, // Add to prevent default behaviour of full-width/height
+        scales: {
+            xAxes: [{ scaleLabel: { display: true, labelString: 'followers' } }],
+            yAxes: [{ scaleLabel: { display: true, labelString: 'actions' } }]
+        }
+    };
+
+    $.getJSON('http://localhost:8080/github/summary', function(data) {
+        // JSON result in `data` variable
+        project1 = data[0];
+        project2 = data[1];
+
+        setProjectInfo(1, project1, ctx1);
+        setProjectInfo(2, project2, ctx2);
+    });
+
+    function setProjectInfo(order, project, ctx){
+
+        prepareDeveloperData(project);
+
+        $('#projectName' + order).text(project.projectName);
+        $('#commitCount' + order).text(project.commitCount);
+        $('#issueCount' + order).text(project.issueCount);
+        $('#smellCount' + order).text(project.smellCount);
+        $('#pullRequestCount' + order).text(project.pullRequestCount);
+        $('#fileCount' + order).text(project.fileCount);
+        $('#developerCount' + order).text(project.developers.length);
+
+        $('#filePerDeveloper' + order).text(project.fileCount / project.developers.length);
+        $('#smellPerDeveloper' + order).text(project.smellCount / project.developers.length);
+        $('#smellPerFile' + order).text(project.smellCount / project.fileCount);
+
+        $('#averageDeveloperActionCount' + order).text(project.totalActivity / project.developers.length)
+        $('#averageDeveloperFollowerCount' + order).text(project.totalFollower / project.developers.length)
+
+        drawGraph(project, ctx);
+    }
+
+    function prepareDeveloperData(project){
+        const data = [];
+        let totalFollower = 0, totalActivity = 0;
+        $.each(project.developers, function( index, value ) {
+            totalFollower += value.followerCount;
+            totalActivity += value.activityCount;
+            data.push({x: value.followerCount, y: value.activityCount})
+        });
+
+        project.developersData = data;
+        project.totalFollower = totalFollower;
+        project.totalActivity = totalActivity;
+    }
+
+    function drawGraph(data, chart){
+        var myChart = new Chart(chart, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: data.projectName, // Name the series
+                    data: data.developersData, // Specify the data values array
+                    borderColor: '#2196f3', // Add custom color border
+                    backgroundColor: '#2196f3', // Add custom color background (Points and Fill)
+                }
+                ]
+            },
+            options: options
+        });
+    }
+
+</script>
+</html>

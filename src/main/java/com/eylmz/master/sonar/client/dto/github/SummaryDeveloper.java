@@ -12,8 +12,11 @@ public class SummaryDeveloper implements Serializable {
 
     private String name;
 
-    private int experience;
+    private int followerCount;
 
     private int activityCount;
 
+    private int gistCount;
+
+    private int repoCount;
 }

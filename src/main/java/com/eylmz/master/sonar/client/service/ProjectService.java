@@ -16,12 +16,12 @@ public class ProjectService implements IProjectService {
 
     @Override
     public List<Project> listProject() {
-        return new ArrayList<>(this.projectRepository.findProject());
+        return new ArrayList<>(this.projectRepository.listProjects());
     }
 
     @Override
     public List<Project> listFiles(String uuid) {
-        return new ArrayList<>(this.projectRepository.findProject(uuid));
+        return new ArrayList<>(this.projectRepository.listFiles(uuid));
     }
 
     @Override

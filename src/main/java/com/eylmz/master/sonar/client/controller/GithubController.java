@@ -3,11 +3,9 @@ package com.eylmz.master.sonar.client.controller;
 import com.eylmz.master.sonar.client.dto.Project;
 import com.eylmz.master.sonar.client.dto.github.*;
 import com.eylmz.master.sonar.client.exception.GithubException;
-import com.eylmz.master.sonar.client.filter.RequestResponseLoggingFilter;
 import com.eylmz.master.sonar.client.integration.github.GithubIntegrator;
 import com.eylmz.master.sonar.client.integration.shell.ShellIntegrator;
 import com.eylmz.master.sonar.client.service.*;
-import com.google.common.collect.Iterators;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -26,9 +24,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @RestController
 @RequiredArgsConstructor
@@ -74,57 +72,57 @@ public class GithubController {
 
     private static final Logger logger = LogManager.getLogger(GithubController.class);
 
+    public HashMap<String, String> map = new HashMap<>();
+
+    private void initMap(){
+        map.put("bootique", "bootique");
+        map.put("easyexcel", "alibaba");
+        map.put("gson", "google");
+        map.put("guava", "google");
+        map.put("guice", "google");
+        map.put("jd-gui", "java-decompiler");
+        map.put("jsoup", "jhy");
+        map.put("maven", "apache");
+        map.put("mockito", "mockito");
+        map.put("mybatis-3", "mybatis\n");
+        map.put("redisson", "redisson\n");
+        map.put("rxjava", "ReactiveX");
+        map.put("spark", "perwendel");
+        map.put("vert.x", "eclipse-vertx");
+        map.put("zookeeper", "apache");
+    }
+
+
     @GetMapping("/shell")
     public void shell() throws IOException, InterruptedException {
         this.shellIntegrator.runCommand();
     }
 
     @GetMapping("/summary")
-    public List<Summary> getSUmmary() throws IOException, InterruptedException {
-
-        String prj1Uuid = "AXZin23VCl93wm5yKTEJ";
-        String prj2Uuid = "AXZipb1ICl93wm5yKTEQ";
-
-        Summary summary1 = new Summary();
-        summary1.setProjectName("mockito");
-
-        summary1.setCommitCount(this.repositoryCommitService.listRepositoryCommits(prj1Uuid).size());
-        summary1.setIssueCount(this.issueService.listIssues(prj1Uuid).size());
-        summary1.setSmellCount(this.sonarService.listIssues(prj1Uuid).size());
-        summary1.setPullRequestCount(this.pullRequestService.listPullRequests(prj1Uuid).size());
-
-        List<SummaryDeveloper> developers = new ArrayList<>();
-        this.userService.listUsers(prj1Uuid).forEach(developer -> {
-            SummaryDeveloper summaryDeveloper = new SummaryDeveloper();
-            summaryDeveloper.setName(developer.getName());
-            summaryDeveloper.setActivityCount(developer.getEventCount());
-            summaryDeveloper.setExperience(developer.getFollowers());
-            developers.add(summaryDeveloper);
-        });
-        summary1.setDevelopers(developers);
-
-
-        Summary summary2 = new Summary();
-        summary2.setProjectName("rxjava");
-
-        summary2.setCommitCount(this.repositoryCommitService.listRepositoryCommits(prj2Uuid).size());
-        summary2.setIssueCount(this.issueService.listIssues(prj2Uuid).size());
-        summary2.setSmellCount(this.sonarService.listIssues(prj2Uuid).size());
-        summary2.setPullRequestCount(this.pullRequestService.listPullRequests(prj2Uuid).size());
-
-        List<SummaryDeveloper> developers2 = new ArrayList<>();
-        this.userService.listUsers(prj2Uuid).forEach(developer -> {
-            SummaryDeveloper summaryDeveloper2 = new SummaryDeveloper();
-            summaryDeveloper2.setName(developer.getName());
-            summaryDeveloper2.setActivityCount(developer.getEventCount());
-            summaryDeveloper2.setExperience(developer.getFollowers());
-            developers2.add(summaryDeveloper2);
-        });
-        summary2.setDevelopers(developers2);
-
+    public List<Summary> getSummary() throws IOException, InterruptedException {
         List<Summary> summaryList = new ArrayList<>();
-        summaryList.add(summary1);
-        summaryList.add(summary2);
+
+        List<Project> projects = projectService.listProject();
+
+        projects.forEach(project -> {
+            Summary summary = new Summary();
+            summary.setProjectName(project.getLong_name());
+            summary.setSmellCount(this.sonarService.listIssues(project.getProject_uuid()).size());
+            summary.setFileCount(this.projectService.listFiles(project.getProject_uuid()).size());
+
+            List<SummaryDeveloper> developers = new ArrayList<>();
+            this.userService.listUsers(project.getLong_name()).forEach(developer -> {
+                SummaryDeveloper summaryDeveloper = new SummaryDeveloper();
+                summaryDeveloper.setName(developer.getName());
+                summaryDeveloper.setActivityCount(developer.getEventCount());
+                summaryDeveloper.setFollowerCount(developer.getFollowers());
+                summaryDeveloper.setGistCount(developer.getPublicGists());
+                summaryDeveloper.setRepoCount(developer.getPublicRepos());
+                developers.add(summaryDeveloper);
+            });
+            summary.setDevelopers(developers);
+            summaryList.add(summary);
+        });
 
         return summaryList;
     }
@@ -197,8 +195,6 @@ public class GithubController {
         }
 
     }
-
-
 
     @GetMapping("/getCommits")
     public Collection<RepositoryCommit> getCommits() throws GithubException {
@@ -285,30 +281,45 @@ public class GithubController {
 
     @GetMapping("/getUsers")
     public List<User> getUsers() {
-        try {
-            List<User> userList = new ArrayList<>();
-            List<org.eclipse.egit.github.core.Contributor> contributors = this.githubIntegrator.getContributors();
-            for (org.eclipse.egit.github.core.Contributor contributor : contributors) {
-                User user = this.convertToDto(githubIntegrator.getUser(contributor.getLogin()));
+        List<User> userList = new ArrayList<>();
+        initMap();
 
-                int eventCount = 0;
-                PageIterator<org.eclipse.egit.github.core.event.Event> eventIterator = this.githubIntegrator.getUserEvents(user.getLogin());
-                while (eventIterator.hasNext()) {
-                    eventCount += eventIterator.next().size();
+        List<Project> projects = projectService.listProject();
+        projects.forEach(project -> {
+            try {
+                if(map.get(project.getLong_name()) != null){
+                    logger.info(project.getName() + " is processing...");
+                    this.githubIntegrator.connect(map.get(project.getLong_name()), project.getLong_name());
+                    User user;
+                    int eventCount = 0;
+                    PageIterator<org.eclipse.egit.github.core.event.Event> eventIterator;
+
+                    List<org.eclipse.egit.github.core.Contributor> contributors = this.githubIntegrator.getContributors();
+                    for (org.eclipse.egit.github.core.Contributor contributor : contributors) {
+                        user = this.convertToDto(githubIntegrator.getUser(contributor.getLogin()));
+                        eventIterator = this.githubIntegrator.getUserEvents(user.getLogin());
+                        while (eventIterator.hasNext()) {
+                            eventCount += eventIterator.next().size();
+                        }
+
+                        user.setEventCount(eventCount);
+                        user.setUuid(project.getLong_name());
+                        userService.addUser(user);
+                        userList.add(user);
+                    }
+                    logger.info(project.getName() + " is processed...");
                 }
 
-                user.setEventCount(eventCount);
-                user.setUuid(projectUuid);
-                userService.addUser(user);
-                userList.add(user);
+            } catch (GithubException e) {
+                e.printStackTrace();
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "users not found"
+                );
             }
-            return userList;
-        } catch (GithubException e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "users not found"
-            );
-        }
+        });
+
+        return userList;
+
     }
 
     @GetMapping("/getUser")

@@ -20,6 +20,8 @@ public class Summary implements Serializable {
 
     private int commitCount;
 
+    private int fileCount;
+
     private List<SummaryDeveloper> developers;
 
 }

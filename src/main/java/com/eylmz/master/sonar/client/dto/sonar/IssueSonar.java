@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 @Data
 @Entity
-@Table(name = "issues")
+@Table(name = "issues_java")
 public class IssueSonar implements Serializable {
 
     /**
@@ -26,11 +26,7 @@ public class IssueSonar implements Serializable {
     private String severity;
     private String message;
     private String status;
-    private String checksum;
-
-
     private String component_uuid;
     private String project_uuid;
-
     private String issue_type;
 }

@@ -1,6 +1,7 @@
 --file count of a project
-select count(*) from projects
-where scope = 'FIL' and language = 'java' and project_uuid = 'AXZin23VCl93wm5yKTEJ';
+select * from projects
+where scope = 'PRJ'
+  and language = 'java' and project_uuid = 'AXZin23VCl93wm5yKTEJ';
 
 --issue count of a project
 select count(*) from issues
@@ -23,3 +24,6 @@ SELECT SUM(CASE WHEN followers < 100 THEN 1 ELSE 0 END) AS "Junior",
        SUM(CASE WHEN followers > 1000 THEN 1 ELSE 0 END) AS "Expert"
 FROM github_users
 where uuid = 'AXZin23VCl93wm5yKTEJ';
+
+
+select * from github_users

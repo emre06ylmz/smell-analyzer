@@ -1,7 +1,9 @@
 package com.eylmz.master.sonar.client.service;
 
+import com.eylmz.master.sonar.client.dto.Project;
 import com.eylmz.master.sonar.client.dto.sonar.IssueSonar;
 import com.eylmz.master.sonar.client.repository.IIssueRepositorySonar;
+import com.eylmz.master.sonar.client.repository.IProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +21,9 @@ public class SonarService implements ISonarService{
     @Autowired
     private IIssueRepositorySonar issueRepositorySonar;
 
+    @Autowired
+    private IProjectRepository projectRepository;
+
     @Override
     public void addIssue(IssueSonar issue) {
         logger.info("issue added: {0}", issue.getKee());
@@ -28,5 +33,10 @@ public class SonarService implements ISonarService{
     @Override
     public List<IssueSonar> listIssues(String projectUuid) {
         return issueRepositorySonar.findIssuesByProject_uuid(projectUuid);
+    }
+
+    @Override
+    public List<Project> listProject() {
+        return projectRepository.listProjects();
     }
 }

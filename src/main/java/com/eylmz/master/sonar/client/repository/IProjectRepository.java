@@ -13,8 +13,8 @@ import java.util.List;
 @Repository
 public interface IProjectRepository extends CrudRepository<Project, Integer> {
     @Query("SELECT p FROM Project p WHERE p.scope = 'PRJ'")
-    List<Project> findProject();
+    List<Project> listProjects();
 
     @Query("SELECT p FROM Project p WHERE p.scope = 'FIL' and p.language = 'java' and p.project_uuid = :uuid")
-    List<Project> findProject(@Param("uuid") String uuid);
+    List<Project> listFiles(@Param("uuid") String uuid);
 }
